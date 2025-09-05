@@ -16,8 +16,8 @@ namespace minimal_api.Dominio.Entidades
         [Required(ErrorMessage ="Email Obrigatorio")]
         [StringLength(255)]
         public string Email { get; set; } = default!;
+        
         [Required(ErrorMessage = "Senha Obrigatoria")]
-
         [StringLength(255)]
         public string Senha { get; set; } = default!;
 
