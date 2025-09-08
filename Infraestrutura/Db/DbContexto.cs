@@ -15,7 +15,7 @@ namespace minimal_api.Infraestrutura.Db
             _configuracaoAppSetings = configuracaoAppSetings;
         }
         public DbSet<Administrador> Administradores { get; set; } = default!;
-        public DbSet<Veiculo> veiculos { get; set; } = default!;
+        public DbSet<Veiculo> Veiculos { get; set; } = default!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Administrador>().HasData(
