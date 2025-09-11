@@ -9,7 +9,7 @@ using minimal_api.Infraestrutura.Db;
 
 namespace minimal_api.Dominio.Servicos
 {
-    public class VeiculosServico(DbContexto contexto) : IVeiculo
+    public class VeiculosServico(DbContexto contexto) : IVeiculoServico
     {
         private readonly DbContexto _contexto = contexto;
 
@@ -29,7 +29,7 @@ namespace minimal_api.Dominio.Servicos
             }
         }
 
-        public List<Veiculo> FindAll(int pagina, string? nome = null, string? marca = null)
+        public List<Veiculo> FindAll(int pagina = 1, string? nome = null, string? marca = null)
         {
             int tamanhoPagina = 10;
             var query = _contexto.Veiculos.AsQueryable();
@@ -41,8 +41,8 @@ namespace minimal_api.Dominio.Servicos
             {
                 query = query.Where(v => EF.Functions.Like(v.Marca, $"%{marca}%"));
             }
-
-            return query.OrderBy(v => v.Id).Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
+            return query.OrderBy(v => v.Id).Skip(((int)pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
+            
         }
 
         public Veiculo? FindById(int id)
