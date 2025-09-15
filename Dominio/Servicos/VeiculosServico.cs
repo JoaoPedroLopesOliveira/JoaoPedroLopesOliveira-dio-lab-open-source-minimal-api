@@ -41,8 +41,7 @@ namespace minimal_api.Dominio.Servicos
             {
                 query = query.Where(v => EF.Functions.Like(v.Marca, $"%{marca}%"));
             }
-            return query.OrderBy(v => v.Id).Skip(((int)pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
-            
+            return query.OrderBy(v => v.Id).Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
         }
 
         public Veiculo? FindById(int id)
