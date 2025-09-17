@@ -9,13 +9,13 @@ namespace minimal_api.Dominio.Interfaces
 {
     public interface IVeiculoServico
     {
-        List<Veiculo> FindAll(int pagina, string? nome = null, string? marca = null);
-        Veiculo? FindById(int id);
+        Task <List<Veiculo>> FindAll(int pagina, string? nome = null, string? marca = null);
+        Task <Veiculo?> FindById(int id);
 
-        void Create(Veiculo veiculo);
+        Task Create(Veiculo veiculo);
 
-        void Update(Veiculo veiculo);
+        Task Update(Veiculo veiculo);
 
-        void DeleteById(int id);
+        Task DeleteById(int id);
     }
 }

@@ -9,10 +9,11 @@ namespace minimal_api.Dominio.Interfaces
 {
     public interface IAdministradorServico
     {
-        Administrador? Login(LoginDTO loginDTO);
-        void Create(Administrador administrador);
-        void Update(Administrador administrador);
-        List<Administrador> FindAll(int pagina);
-        Administrador? FindById(int id);
+        Task<Administrador?> Login(LoginDTO loginDTO);
+        Task Create(Administrador administrador);
+        Task Update(Administrador administrador);
+        Task<List<Administrador>> FindAll(int pagina);
+        Task <Administrador?> FindById(int id);
+        Task DeleteById(int id);
     }
 }

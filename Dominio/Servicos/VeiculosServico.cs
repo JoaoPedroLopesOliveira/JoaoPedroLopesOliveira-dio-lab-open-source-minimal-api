@@ -13,23 +13,23 @@ namespace minimal_api.Dominio.Servicos
     {
         private readonly DbContexto _contexto = contexto;
 
-        public void Create(Veiculo veiculo)
+        public async Task Create(Veiculo veiculo)
         {
-            _contexto.Veiculos.Add(veiculo);
-            _contexto.SaveChanges();
+           await _contexto.Veiculos.AddAsync(veiculo);
+           await _contexto.SaveChangesAsync();
         }
 
-        public void DeleteById(int id)
+        public async Task DeleteById(int id)
         {
-            var veiculo = _contexto.Veiculos.Find(id);
+            var veiculo = await _contexto.Veiculos.FindAsync(id);
             if (veiculo != null)
             {
                 _contexto.Veiculos.Remove(veiculo);
-                _contexto.SaveChanges();
+                await _contexto.SaveChangesAsync();
             }
         }
 
-        public List<Veiculo> FindAll(int pagina = 1, string? nome = null, string? marca = null)
+        public async Task <List<Veiculo>> FindAll(int pagina = 1, string? nome = null, string? marca = null)
         {
             int tamanhoPagina = 10;
             var query = _contexto.Veiculos.AsQueryable();
@@ -41,15 +41,15 @@ namespace minimal_api.Dominio.Servicos
             {
                 query = query.Where(v => EF.Functions.Like(v.Marca, $"%{marca}%"));
             }
-            return query.OrderBy(v => v.Id).Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList();
+            return await query.OrderBy(v => v.Id).Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToListAsync();
         }
 
-        public Veiculo? FindById(int id)
+        public async Task <Veiculo?> FindById(int id)
         {
-            return _contexto.Veiculos.Where(v => v.Id == id).FirstOrDefault();
+            return await _contexto.Veiculos.Where(v => v.Id == id).FirstOrDefaultAsync();
         }
 
-        public void Update(Veiculo veiculo)
+        public async Task Update(Veiculo veiculo)
         {
             var veiculoExistente = _contexto.Veiculos.Find(veiculo.Id);
             if (veiculoExistente == null)
@@ -57,7 +57,7 @@ namespace minimal_api.Dominio.Servicos
                 throw new Exception("Veiculo não encontrado!");
             }
             _contexto.Veiculos.Update(veiculo);
-            _contexto.SaveChanges();
+            await _contexto.SaveChangesAsync();
         }
 
 
