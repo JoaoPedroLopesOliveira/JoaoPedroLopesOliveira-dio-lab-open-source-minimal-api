@@ -47,15 +47,6 @@ namespace minimal_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Administradores");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Email = "Administrador@teste.com",
-                            Perfil = "Adm",
-                            Senha = "123456"
-                        });
                 });
 
             modelBuilder.Entity("minimal_api.Dominio.Entidades.Veiculo", b =>

@@ -14,18 +14,27 @@ namespace minimal_api.Dominio.Servicos
     public class AdministradorServico : IAdministradorServico
     {
         private readonly DbContexto _contexto;
-        public AdministradorServico(DbContexto contexto)
+        private readonly JwtService _jwtservice;
+        public AdministradorServico(DbContexto contexto, JwtService jwtService)
         {
             _contexto = contexto;
+            _jwtservice = jwtService;
         }
 
-        public async Task Create(Administrador administrador)
+        public async Task<Administrador> Create(Administrador administrador)
         {
+            var existe = await _contexto.Administradores.AnyAsync(a => a.Email == administrador.Email);
+            if (existe)
+            {
+                throw new Exception("Ja existe um administrador com este email");
+            }
+
             var hasher = new PasswordHasher<Administrador>();
             administrador.Senha = hasher.HashPassword(administrador, administrador.Senha);
 
             _contexto.Administradores.Add(administrador);
             await _contexto.SaveChangesAsync();
+            return administrador;
         }
 
         public async Task DeleteById(int id)
@@ -49,14 +58,16 @@ namespace minimal_api.Dominio.Servicos
             return await _contexto.Administradores.Where(adm => adm.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task<Administrador?> Login(LoginDTO loginDTO)
+        public async Task<String?> Login(LoginDTO loginDTO)
         {
             var adm = await _contexto.Administradores.FirstOrDefaultAsync(a => a.Email == loginDTO.Email);
             if (adm is null) return null;
 
             var hasher = new PasswordHasher<Administrador>();
             var result = hasher.VerifyHashedPassword(adm, adm.Senha, loginDTO.Senha);
-            return result == PasswordVerificationResult.Success ? adm : null;
+            if (result == PasswordVerificationResult.Failed) return null;
+
+            return _jwtservice.GenerateToken(adm);
         }
 
         public async Task Update(Administrador administrador)

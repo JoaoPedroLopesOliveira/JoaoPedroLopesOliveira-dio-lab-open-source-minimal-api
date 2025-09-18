@@ -11,8 +11,8 @@ using minimal_api.Infraestrutura.Db;
 namespace minimal_api.Migrations
 {
     [DbContext(typeof(DbContexto))]
-    [Migration("20250905183901_VeiculosMigration")]
-    partial class VeiculosMigration
+    [Migration("20250917183453_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -50,15 +50,6 @@ namespace minimal_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Administradores");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Email = "Administrador@teste.com",
-                            Perfil = "Adm",
-                            Senha = "123456"
-                        });
                 });
 
             modelBuilder.Entity("minimal_api.Dominio.Entidades.Veiculo", b =>
@@ -84,7 +75,7 @@ namespace minimal_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("veiculos");
+                    b.ToTable("Veiculos");
                 });
 #pragma warning restore 612, 618
         }

@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
 builder.Services.AddScoped<IVeiculoServico, VeiculosServico>();
+builder.Services.AddScoped<JwtService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -57,17 +58,37 @@ ErrorValidation validateDTOAdmin(AdministradorDTO administradorDTO)
     return validation;
 }
 
+app.MapPost("/administradores", async (AdministradorDTO administradorDTO, IAdministradorServico administradorServico) =>
+{
+    try
+    {
+        var administrador = new Administrador
+        {
+            Email = administradorDTO.Email,
+            Senha = administradorDTO.Senha,
+            Perfil = administradorDTO.Perfil
+        };
+        var novoAdministrador = await administradorServico.Create(administrador);
+        return Results.Created($"/administradores/{novoAdministrador.Id}", new {
+            novoAdministrador.Id,
+            novoAdministrador.Email,
+            novoAdministrador.Perfil
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { mensagem = ex.Message});
+    }
+}).WithTags("Administradores");
+
 app.MapPost("/administradores/login", async ([FromBody] LoginDTO loginDTO, IAdministradorServico administradorServico) =>
 {
-    var administrador = await administradorServico.Login(loginDTO);
-    if (administrador is not null)
-    {
-        return Results.Ok("Logado com sucesso");
-    }
-    else
+    var token = await administradorServico.Login(loginDTO);
+    if (token == null)
     {
         return Results.Unauthorized();
     }
+    return Results.Ok(new {Token = token});
 }).WithTags("Administradores");
 
 app.MapGet("/administradores", async ([FromQuery] int? pagina, IAdministradorServico administradorServico) =>
