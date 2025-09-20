@@ -8,6 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 using minimal_api.Dominio.ModelViews;
 using minimal_api.Dominio.Entidades;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 #region Builder
 var builder = WebApplication.CreateBuilder(args);
@@ -15,8 +20,56 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
 builder.Services.AddScoped<IVeiculoServico, VeiculosServico>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddAuthentication(option =>
+{
+    option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(option =>
+{
+    option.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateLifetime = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
+builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira o token JWT desta maneira: Bearer {seu token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
+});
+
 
 
 builder.Services.AddDbContext<DbContexto>(
@@ -69,7 +122,8 @@ app.MapPost("/administradores", async (AdministradorDTO administradorDTO, IAdmin
             Perfil = administradorDTO.Perfil
         };
         var novoAdministrador = await administradorServico.Create(administrador);
-        return Results.Created($"/administradores/{novoAdministrador.Id}", new {
+        return Results.Created($"/administradores/{novoAdministrador.Id}", new
+        {
             novoAdministrador.Id,
             novoAdministrador.Email,
             novoAdministrador.Perfil
@@ -77,9 +131,12 @@ app.MapPost("/administradores", async (AdministradorDTO administradorDTO, IAdmin
     }
     catch (Exception ex)
     {
-        return Results.BadRequest(new { mensagem = ex.Message});
+        return Results.BadRequest(new { mensagem = ex.Message });
     }
-}).WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Administradores");
 
 app.MapPost("/administradores/login", async ([FromBody] LoginDTO loginDTO, IAdministradorServico administradorServico) =>
 {
@@ -95,15 +152,18 @@ app.MapGet("/administradores", async ([FromQuery] int? pagina, IAdministradorSer
 {
     var administradores = await administradorServico.FindAll(pagina ?? 1);
     return Results.Ok(administradores);
-}).WithTags("Administradores");
+}).RequireAuthorization().WithTags("Administradores");
 
 app.MapGet("/administradores/{id}", async (int id, IAdministradorServico administradorServico) =>
 {
     var administrador = await administradorServico.FindById(id);
     return administrador is not null
     ? Results.Ok(administrador)
-    : Results.NotFound(); 
-}).WithTags("Administradores");
+    : Results.NotFound();
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Administradores");
 
 app.MapPut("/administradores/{id}", async ([FromRoute] int id, AdministradorDTO administradorDTO, IAdministradorServico administradorServico) =>
 {
@@ -119,7 +179,10 @@ app.MapPut("/administradores/{id}", async ([FromRoute] int id, AdministradorDTO 
 
     await administradorServico.Update(administrador);
     return Results.Ok(administrador);
-}).WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Administradores");
 
 app.MapDelete("/administradores/{id}", async ([FromRoute] int id, IAdministradorServico administradorServico) =>
 {
@@ -127,7 +190,10 @@ app.MapDelete("/administradores/{id}", async ([FromRoute] int id, IAdministrador
     if (administrador == null) return Results.NotFound();
     await administradorServico.DeleteById(id);
     return Results.Ok();
-}).WithTags("Administradores");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Administradores");
 #endregion
 
 #region Veiculos
@@ -204,7 +270,10 @@ app.MapPut("/veiculos/{id}", async ([FromRoute] int id, VeiculoDTO veiculoDTO, I
     await veiculoServico.Update(veiculo);
 
     return Results.Ok(veiculo);
-}).WithTags("Veiculos");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Veiculos");
 
 app.MapDelete("/veiculos/{id}",async ([FromRoute] int id, IVeiculoServico veiculoServico) =>
 {
@@ -212,13 +281,18 @@ app.MapDelete("/veiculos/{id}",async ([FromRoute] int id, IVeiculoServico veicul
     if (veiculo == null) return Results.NotFound();
     await veiculoServico.DeleteById(id);
     return Results.Ok();
-}).WithTags("Veiculos");
+})
+.RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute{Roles = "ADM"})
+.WithTags("Veiculos");
 
 #endregion
 
 #region app
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.Run();

@@ -50,7 +50,13 @@ namespace minimal_api.Dominio.Servicos
         public async Task<List<Administrador>> FindAll(int pagina = 1)
         {
             int tamanhoPagina = 10;
-            return await _contexto.Administradores.Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToListAsync();
+            return await _contexto.Administradores.Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).Select(a => new Administrador
+            {
+                Id = a.Id,
+                Email = a.Email,
+                Senha = a.Senha,
+                Perfil = a.Perfil
+            }).ToListAsync();
         }
 
         public async Task <Administrador?> FindById(int id)
